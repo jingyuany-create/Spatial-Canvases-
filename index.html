@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spatial Canvases — Assignment 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Spatial Canvases</h1>
+  <p class="subtitle">Assignment 3 — 2D (p5.js) and 3D (three.js) Spatial Canvases</p>
+</header>
+
+<section class="statement">
+  <h2>Design Statement</h2>
+  <p>
+    This work explores the translation of a simple hand-drawn gesture — a single stroke,
+    a filled circle, a scribbled outline — into procedural form. The 2D sketches treat
+    the mark as raw material: a fixed vocabulary of primitives arranged into a composed
+    scene, and a live, responsive trace that keeps changing as it is made. The 3D sketches
+    carry that same idea into space, using primitive geometry, layered materials, light,
+    and fog to give the marks volume, depth, and atmosphere. Underlying all four pieces is
+    an interest in where the boundary sits between an authored gesture and a generative
+    system that elaborates on it.
+  </p>
+</section>
+
+<section class="canvases">
+  <h2>3D Spatial Canvases — three.js</h2>
+
+  <div class="canvas-block">
+    <h3>01 — Procedural Geometry, Orbit Camera</h3>
+    <p class="caption">A rotating field of primitive geometries (spheres, cones, tori, icosahedra)
+      arranged along a spiral, viewable from any angle with an orbiting camera.</p>
+    <div id="three-canvas-1" class="canvas-container"></div>
+  </div>
+
+  <div class="canvas-block">
+    <h3>02 — Materials, Lighting &amp; Fog</h3>
+    <p class="caption">A small landscape composition exploring standard, physical (glass-like water),
+      and emissive materials under directional + ambient light, with exponential fog for depth.</p>
+    <div id="three-canvas-2" class="canvas-container"></div>
+  </div>
+</section>
+
+<section class="canvases">
+  <h2>2D Spatial Canvases — p5.js</h2>
+
+  <div class="canvas-block">
+    <h3>03 — Static Composition, Primitive Shapes</h3>
+    <p class="caption">A fixed abstract landscape built entirely from circles, arcs, triangles,
+      and lines, using a limited, considered color palette.</p>
+    <div id="p5-canvas-1" class="canvas-container"></div>
+  </div>
+
+  <div class="canvas-block">
+    <h3>04 — Interactive / Animated Drawing</h3>
+    <p class="caption">Draw with the mouse — each stroke spawns a trail of drifting, fading
+      particles. Click "clear" to start over.</p>
+    <div id="p5-canvas-2" class="canvas-container"></div>
+    <button id="clear-btn">Clear</button>
+  </div>
+</section>
+
+<footer>
+  <p>Built with p5.js and three.js — code available in this repository.</p>
+</footer>
+
+<!-- Libraries (CDN, no need to upload these files yourself) -->
+<script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<!-- Your sketches -->
+<script src="p5/sketch1.js"></script>
+<script src="p5/sketch2.js"></script>
+<script src="three/scene1.js"></script>
+<script src="three/scene2.js"></script>
+
+</body>
+</html>
