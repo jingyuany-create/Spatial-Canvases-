@@ -4,7 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Spatial Canvases — Assignment 3</title>
-<link rel="stylesheet" href="style.css">
+<style>
+:root {
+  --bg: #f4f1ea;
+  --ink: #2b2926;
+  --muted: #6b665c;
+  --accent: #c15f3c;
+  --line: #ddd7c9;
+  --card: #ffffff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0 24px 80px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  line-height: 1.55;
+}
+header { max-width: 780px; margin: 60px auto 20px; text-align: center; }
+h1 { font-size: 34px; margin: 0 0 6px; letter-spacing: -0.01em; }
+.subtitle { color: var(--muted); margin: 0; font-size: 15px; }
+.statement { max-width: 700px; margin: 40px auto; padding: 24px 28px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.statement h2 { margin-top: 0; font-size: 16px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); }
+.canvases { max-width: 900px; margin: 56px auto; }
+.canvases > h2 { font-size: 22px; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 28px; }
+.canvas-block { margin-bottom: 44px; }
+.canvas-block h3 { margin: 0 0 4px; font-size: 17px; }
+.caption { color: var(--muted); font-size: 14px; margin: 0 0 14px; max-width: 600px; }
+.canvas-container { border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #000; display: inline-block; line-height: 0; min-height: 380px; min-width: 500px; }
+#clear-btn { margin-top: 10px; font-family: inherit; font-size: 14px; padding: 6px 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); cursor: pointer; }
+#clear-btn:hover { background: #eee; }
+footer { max-width: 900px; margin: 60px auto 0; text-align: center; color: var(--muted); font-size: 13px; }
+</style>
 </head>
 <body>
 
@@ -65,19 +97,183 @@
 </section>
 
 <footer>
-  <p>Built with p5.js and three.js — code available in this repository.</p>
+  <p>Built with p5.js and three.js.</p>
 </footer>
 
-<!-- Libraries (CDN, no need to upload these files yourself) -->
+<!-- Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
-<!-- Your sketches -->
-<script src="p5/sketch1.js"></script>
-<script src="p5/sketch2.js"></script>
-<script src="three/scene1.js"></script>
-<script src="three/scene2.js"></script>
+<script>
+// ===================================================================
+// 03 — Static Composition, Primitive Shapes (p5.js, instance mode)
+// ===================================================================
+const sketch1 = (p) => {
+  const W = 500, H = 380;
+  const palette = {
+    sky: '#EAD9C0', sunGlow: '#F2CC8F', sun: '#E07A5F',
+    hillFar: '#81B29A', hillNear: '#3D405B', tree: '#2B2926',
+  };
+  p.setup = () => { p.createCanvas(W, H); p.noLoop(); p.angleMode(p.DEGREES); };
+  p.draw = () => {
+    p.background(palette.sky);
+    p.noStroke();
+    for (let r = 160; r > 60; r -= 20) { p.fill(242, 204, 143, 30); p.circle(360, 110, r); }
+    p.fill(palette.sun); p.circle(360, 110, 70);
+    p.fill(palette.hillFar); p.arc(160, 420, 560, 340, 180, 360, p.CHORD);
+    p.fill(palette.hillNear); p.arc(420, 460, 620, 300, 180, 360, p.CHORD);
+    p.fill(palette.tree);
+    [90, 140, 190, 260, 310, 250].forEach((x, i) => drawTree(x, 330 - (i % 3) * 8, 26 + (i % 3) * 6));
+    p.stroke(palette.hillNear); p.strokeWeight(2);
+    for (let x = 0; x < W; x += 14) { const h = 6 + (x % 40) / 6; p.line(x, H - 4, x, H - 4 - h); }
+  };
+  function drawTree(x, y, s) {
+    p.triangle(x, y - s, x - s * 0.6, y, x + s * 0.6, y);
+    p.triangle(x, y - s * 1.5, x - s * 0.45, y - s * 0.55, x + s * 0.45, y - s * 0.55);
+    p.rect(x - 3, y, 6, 10);
+  }
+};
+new p5(sketch1, 'p5-canvas-1');
+
+// ===================================================================
+// 04 — Interactive / Animated Drawing (p5.js, instance mode)
+// ===================================================================
+const sketch2 = (p) => {
+  const W = 500, H = 380;
+  let particles = [];
+  const palette = ['#E07A5F', '#3D405B', '#81B29A', '#F2CC8F', '#EAD9C0'];
+  p.setup = () => {
+    p.createCanvas(W, H);
+    p.background(20, 18, 24);
+    const clearBtn = document.getElementById('clear-btn');
+    if (clearBtn) clearBtn.addEventListener('click', () => { particles = []; p.background(20, 18, 24); });
+  };
+  p.draw = () => {
+    p.noStroke(); p.fill(20, 18, 24, 40); p.rect(0, 0, W, H);
+    if (p.mouseIsPressed && p.mouseX > 0 && p.mouseX < W && p.mouseY > 0 && p.mouseY < H) {
+      for (let i = 0; i < 3; i++) particles.push(makeParticle(p.mouseX, p.mouseY));
+    }
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const pt = particles[i];
+      pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.01; pt.life -= 1;
+      p.noStroke();
+      p.fill(pt.col[0], pt.col[1], pt.col[2], p.map(pt.life, 0, pt.maxLife, 0, 200));
+      p.circle(pt.x, pt.y, pt.size);
+      if (pt.life <= 0) particles.splice(i, 1);
+    }
+  };
+  function makeParticle(x, y) {
+    const c = hexToRgb(palette[Math.floor(p.random(palette.length))]);
+    const maxLife = p.random(50, 110);
+    return { x: x + p.random(-4, 4), y: y + p.random(-4, 4), vx: p.random(-0.8, 0.8), vy: p.random(-1.4, -0.2), size: p.random(4, 14), col: c, life: maxLife, maxLife };
+  }
+  function hexToRgb(hex) {
+    const v = hex.replace('#', '');
+    return [parseInt(v.substring(0, 2), 16), parseInt(v.substring(2, 4), 16), parseInt(v.substring(4, 6), 16)];
+  }
+};
+new p5(sketch2, 'p5-canvas-2');
+
+// ===================================================================
+// 01 — Procedural Geometry, Orbit Camera (three.js)
+// ===================================================================
+(function () {
+  const W = 500, H = 380;
+  const container = document.getElementById('three-canvas-1');
+  if (!container) return;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x14141f);
+  const camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 200);
+  camera.position.set(7, 6, 10);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08; controls.target.set(0, 1, 0);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(6, 10, 4); scene.add(key);
+  const rim = new THREE.PointLight(0xe07a5f, 0.7, 30); rim.position.set(-6, 3, -4); scene.add(rim);
+  const palette = [0xe07a5f, 0x81b29a, 0xf2cc8f, 0x3d405b];
+  const makers = [
+    () => new THREE.SphereGeometry(0.5, 20, 14),
+    () => new THREE.ConeGeometry(0.5, 1.1, 18),
+    () => new THREE.TorusGeometry(0.42, 0.16, 14, 28),
+    () => new THREE.IcosahedronGeometry(0.55, 0),
+  ];
+  const group = new THREE.Group();
+  const N = 48;
+  for (let i = 0; i < N; i++) {
+    const geo = makers[i % makers.length]();
+    const mat = new THREE.MeshStandardMaterial({ color: palette[i % palette.length], roughness: 0.45, metalness: 0.15 });
+    const mesh = new THREE.Mesh(geo, mat);
+    const a = (i / N) * Math.PI * 6;
+    const r = 1.2 + (i / N) * 5;
+    mesh.position.set(Math.cos(a) * r, Math.sin(i * 0.7) * 1.8 + 1.5, Math.sin(a) * r);
+    mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+    group.add(mesh);
+  }
+  scene.add(group);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(9, 40), new THREE.MeshStandardMaterial({ color: 0x1c1c28, roughness: 0.9 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -1.2; scene.add(floor);
+  function animate() { requestAnimationFrame(animate); group.rotation.y += 0.0025; controls.update(); renderer.render(scene, camera); }
+  animate();
+})();
+
+// ===================================================================
+// 02 — Materials, Lighting & Fog (three.js)
+// ===================================================================
+(function () {
+  const W = 500, H = 380;
+  const container = document.getElementById('three-canvas-2');
+  if (!container) return;
+  const scene = new THREE.Scene();
+  const skyColor = 0xbfd9e8;
+  scene.background = new THREE.Color(skyColor);
+  scene.fog = new THREE.FogExp2(skyColor, 0.045);
+  const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 200);
+  camera.position.set(9, 4, 11);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.target.set(0, 1, 0); controls.maxPolarAngle = Math.PI / 2.05;
+  scene.add(new THREE.HemisphereLight(skyColor, 0x6b8f4e, 0.85));
+  const sunLight = new THREE.DirectionalLight(0xfff2d6, 0.9); sunLight.position.set(8, 12, 4); scene.add(sunLight);
+  const fill = new THREE.PointLight(0xffffff, 0.25, 20); fill.position.set(-5, 3, -3); scene.add(fill);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0x6b8f4e, roughness: 0.95 }));
+  ground.rotation.x = -Math.PI / 2; scene.add(ground);
+  const water = new THREE.Mesh(new THREE.CircleGeometry(3.2, 32), new THREE.MeshPhysicalMaterial({ color: 0x2a6f97, roughness: 0.15, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.1, transparent: true, opacity: 0.85 }));
+  water.rotation.x = -Math.PI / 2; water.position.set(3, 0.02, 2); scene.add(water);
+  const sun = new THREE.Mesh(new THREE.SphereGeometry(0.9, 20, 16), new THREE.MeshStandardMaterial({ color: 0xf2cc8f, emissive: 0xf2cc8f, emissiveIntensity: 0.9, roughness: 0.5 }));
+  sun.position.set(-6, 6, -8); scene.add(sun);
+  function makeTree(x, z, hue) {
+    const g = new THREE.Group();
+    const trunkH = 1.4;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.18, trunkH, 8), new THREE.MeshStandardMaterial({ color: 0x6b4a2f, roughness: 0.9 }));
+    trunk.position.y = trunkH / 2; g.add(trunk);
+    for (let i = 0; i < 3; i++) {
+      const r = 0.75 * (1 - i * 0.22), cH = r * 1.3;
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(r, cH, 10), new THREE.MeshStandardMaterial({ color: hue, roughness: 0.8 }));
+      cone.position.y = trunkH + i * cH * 0.55 + cH * 0.4; g.add(cone);
+    }
+    g.position.set(x, 0, z);
+    return g;
+  }
+  const treeHues = [0x4a7a3a, 0x3d6b31, 0x5c8f47];
+  [[-2, 2], [-3.2, 3.4], [-1, 3.6], [2, -3], [3.4, -2.2], [1, -3.6], [-4, -1]].forEach(([x, z], i) => scene.add(makeTree(x, z, treeHues[i % treeHues.length])));
+  function makeRock(x, z, r) {
+    const rock = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 0), new THREE.MeshStandardMaterial({ color: 0x8a8478, roughness: 0.9, flatShading: true }));
+    rock.position.set(x, r * 0.6, z);
+    return rock;
+  }
+  [[-5, 4, 0.5], [4.5, 3.2, 0.4], [-1.5, -1.5, 0.35]].forEach(([x, z, r]) => scene.add(makeRock(x, z, r)));
+  function animate() { requestAnimationFrame(animate); sun.rotation.y += 0.003; controls.update(); renderer.render(scene, camera); }
+  animate();
+})();
+</script>
 
 </body>
 </html>
